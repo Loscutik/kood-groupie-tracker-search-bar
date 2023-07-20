@@ -212,7 +212,7 @@ if (mont.selectedIndex === 2) {
                       } 
                     let obloco2 = arr1.join(" ");
                     drp.push(obloco2 + ' - Location');
-                break;
+                    //break;
           }
         }
       }
