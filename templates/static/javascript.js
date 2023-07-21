@@ -111,7 +111,7 @@ if (mont.selectedIndex === 2) {
   let url = 'http://localhost:8080/json';
   let urlloc = 'http://localhost:8080/jsonloc'; // For Locations
   let jsonres = []
-  fetch(url)
+  fetch(url,{method: 'POST',})
   .then(response => {
     // console.log(response)
     if (response.ok) {
@@ -131,7 +131,7 @@ if (mont.selectedIndex === 2) {
 
   //console.log("data:", jsonres)
   let jsonresloc = []
-  fetch(urlloc)
+  fetch(urlloc,{method: 'POST',})
   .then(response2 => {
     if (response2.ok) {
       return response2.json();
@@ -147,6 +147,7 @@ if (mont.selectedIndex === 2) {
   });
 
   console.log("data loc:", jsonresloc)
+
   // Here should be the function which places the JSON elements according to the typed input
   function updateValue(e) { 
     dropdwn.innerHTML = ""
