@@ -197,6 +197,7 @@ if (mont.selectedIndex === 2) {
         }
       }
     }
+
     // Locations
     for (let k = 0; k < jsonresloc.length; k++) {
       //console.log("logloghere1", Object.values(jsonresloc[k])[0]) //l
@@ -212,49 +213,51 @@ if (mont.selectedIndex === 2) {
                       } 
                     let obloco2 = arr1.join(" ");
                     drp.push(obloco2 + ' - Location');
-                break;
+                    //break;
           }
         }
       }
     } // End of locations
-     console.log('drp', drp)
-    for (let y = 0; y < drp.length; y++) {
+
+    //console.log('drp', drp)
+    let drpn = [...new Set(drp)];
+    for (let y = 0; y < drpn.length; y++) {
       let obj = document.createElement("li");
       obj.setAttribute('class', 'listclass');
       // obj.innerHTML = drp[y];
-      if (drp[y].includes(' - Artist')) {
+      if (drpn[y].includes(' - Artist')) {
         let ar = " - Artist"
-        let drpp = drp[y].split(ar).join('')
-        obj.innerHTML = '<a href="http://localhost:8080/?Name=' + drpp + '" style="text-decoration:none;color:black;">' + drp[y] + '</a>';
+        let drpp = drpn[y].split(ar).join('')
+        obj.innerHTML = '<a href="http://localhost:8080/?Name=' + drpp + '" style="text-decoration:none;color:black;">' + drpn[y] + '</a>';
         dropdwn.appendChild(obj);
       }
 
-      if (drp[y].includes(' - Member')) { // NEED TO DO filter
-        obj.innerHTML = drp[y];
+      if (drpn[y].includes(' - Member')) { // NEED TO DO filter
+        obj.innerHTML = drpn[y];
         // found members ->> "Phil Collins" -> "Phil Collins" and "Genesis" 
         // console.log(groupname, " - Group name;\n", drp[y]) // = Group name
         dropdwn.appendChild(obj);
       }
 
-      if (drp[y].includes(' - Location')) {
-        obj.innerHTML = drp[y];
+      if (drpn[y].includes(' - Location')) {
+        obj.innerHTML = drpn[y];
         let arl = " - Location"
-        let drppl = (drp[y].split(arl).join('')).replace(', ', '%2C+')
-        obj.innerHTML = '<a href="http://localhost:8080/?Location=' + drppl + '" style="text-decoration:none;color:black;">' + drp[y] + '</a>';
+        let drppl = (drpn[y].split(arl).join('')).replace(', ', '%2C+')
+        obj.innerHTML = '<a href="http://localhost:8080/?Location=' + drppl + '" style="text-decoration:none;color:black;">' + drpn[y] + '</a>';
         dropdwn.appendChild(obj);
       }
 
-      if (drp[y].includes(' - Creation year')) {
+      if (drpn[y].includes(' - Creation year')) {
         let yr = " - Creation year"
-        let drppy = drp[y].split(yr).join('')
-        obj.innerHTML = '<a href="http://localhost:8080/?CreationDateFrom=' + drppy + '&CreationDateTo=' + drppy + '" style="text-decoration:none;color:black;">' + drp[y] + '</a>';
+        let drppy = drpn[y].split(yr).join('')
+        obj.innerHTML = '<a href="http://localhost:8080/?CreationDateFrom=' + drppy + '&CreationDateTo=' + drppy + '" style="text-decoration:none;color:black;">' + drpn[y] + '</a>';
         dropdwn.appendChild(obj);
       }
 
-      if (drp[y].includes(' - First album')) {
+      if (drpn[y].includes(' - First album')) {
         let yf = " - First album"
-        let drppya = (drp[y].split(yf).join('')).split('-').join('')
-        obj.innerHTML = '<a href="http://localhost:8080/?FirstAlbumFromDay=' + drppya[0] + drppya[1] + '&FirstAlbumFromMonth=' + drppya[2] + drppya[3] + '&FirstAlbumFromYear=' + drppya[4] + drppya[5] + drppya[6] + drppya[7] + '&FirstAlbumToDay=' + drppya[0] + drppya[1] + '&FirstAlbumToMonth=' + drppya[2] + drppya[3] + '&FirstAlbumToYear=' + drppya[4] + drppya[5] + drppya[6] + drppya[7] + '" style="text-decoration:none;color:black;">' + drp[y] + '</a>';
+        let drppya = (drpn[y].split(yf).join('')).split('-').join('')
+        obj.innerHTML = '<a href="http://localhost:8080/?FirstAlbumFromDay=' + drppya[0] + drppya[1] + '&FirstAlbumFromMonth=' + drppya[2] + drppya[3] + '&FirstAlbumFromYear=' + drppya[4] + drppya[5] + drppya[6] + drppya[7] + '&FirstAlbumToDay=' + drppya[0] + drppya[1] + '&FirstAlbumToMonth=' + drppya[2] + drppya[3] + '&FirstAlbumToYear=' + drppya[4] + drppya[5] + drppya[6] + drppya[7] + '" style="text-decoration:none;color:black;">' + drpn[y] + '</a>';
         dropdwn.appendChild(obj);
       }
     }

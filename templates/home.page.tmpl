@@ -197,9 +197,9 @@
       <section class="card_right">
         <h2 class="band_name title">{{ $card.Name }}</h2>
         <div class="members">
-          <ul>
+          <ul class="memlist">
             {{ range $card.Members }}
-            <li>{{ . }}</li>
+            <li class="memlist">{{ . }}</li>
             {{ end }}
           </ul>
         </div>

@@ -179,15 +179,18 @@ a {
     suffix: "  ";
 }
 ul{
-    list-style-type: music;
+  list-style-type: none;
     vertical-align: top;
     margin: 5% 10%;
+}
+.memlist {
+    list-style-type: music;
 }
 ul.location p{
     text-transform: capitalize;
 }
 li ul{
-    list-style: none;
+    list-style-type: none;
 }
 li {
     line-height: 200%;
@@ -481,7 +484,6 @@ ul#dropdown {
   text-align: left;
   box-shadow: 0px 0px 10px #323331a6;
 }
-
 .listclass:hover {
   background-color: rgba(0,0,0,0.05);
   border-radius: 5px;
