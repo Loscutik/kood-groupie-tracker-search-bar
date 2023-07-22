@@ -1,6 +1,3 @@
-// TODO find members
-// TODO show only 1 row if there are several same 'names' (locations, creation year)
-// TODO search must work in the info page
 package main
 
 import (
@@ -168,9 +165,10 @@ func (app *application) createRouters() *http.ServeMux {
 	// Handlers to run the web pages
 	mux.HandleFunc("/", app.homePageHandler)
 	mux.HandleFunc("/info", app.concertsInfo)
-	mux.HandleFunc("/json", app.getJsonForJS)
-	//mux.Handle("/json", app.methodChecker("POST")(http.HandlerFunc(app.getJsonForJS)))
-	mux.HandleFunc("/jsonloc", app.getJsonForJSloc)
+	//mux.HandleFunc("/json", app.getJsonForJS)
+	mux.Handle("/json", app.methodChecker("POST")(http.HandlerFunc(getJsonForJS)))
+	//mux.HandleFunc("/jsonloc", app.getJsonForJSloc)
+	mux.Handle("/jsonloc", app.methodChecker("POST")(http.HandlerFunc(getJsonForJSloc)))
 	fileServer := http.FileServer(neuteredFileSystem{http.Dir(TEMPLATES_PATH + "static/")})
 	// fileServer := http.FileServer( http.Dir(TEMPLATES_PATH + "static/"))
 	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))

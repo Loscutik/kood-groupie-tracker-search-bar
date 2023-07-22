@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -18,81 +17,39 @@ func (app *application) homePageHandler(w http.ResponseWriter, r *http.Request) 
 		app.NotFound(w, r)
 		return
 	}
-	// get filters from the http request
 
 	var filtersValue filtersValues
-	filtersValue.Members = make([]int, len(app.filtersConstrains.Members))
-	var filtersSet []filters.SetGivenFilter
-	var filtersOrSet []filters.SetGivenFilterOr
+	var filtersSet filters.SetGivenFilter
+	var filtersOrSet filters.SetGivenFilterOr
 
 	// getting filters
-	// filter by the name of groupe
-	filtersValue.Name = r.URL.Query().Get("Name")
-	if filtersValue.Name != "" {
-		filters.AddGivenFilter(&filtersSet, filters.FilterNameContain, filtersValue.Name)
+	filtersValue = getFiltersValuesFromQuery(r.URL.Query())
+
+	filtersSet.AddGivenFilter(filters.FilterNameContain, filtersValue.Name)
+
+	filtersOrSet.AddGivenFilterOr(filters.FilterNumberOfMembers, filtersValue.Members)
+
+	err := addDateCreationFilter(&filtersValue, &filtersSet)
+	if err != nil {
+		app.ClientError(w, r, http.StatusBadRequest, fmt.Sprintf("running a filter Date Creation failures: %v ", err))
+		return
 	}
 
-	// filter by the number of members
-	if r.URL.Query().Get("Members") != "" {
-		membersFilters := r.URL.Query()["Members"]
-		var valuesMembersFilter []int
-		for _, mf := range membersFilters {
-			i, err := strconv.Atoi(mf)
-			if err == nil {
-				valuesMembersFilter = append(valuesMembersFilter, i)
-			}
-		}
-		for _, v := range valuesMembersFilter {
-			filtersValue.Members[v-1] = 1
-		}
-
-		filters.AddGivenFilterOr(&filtersOrSet, filters.FilterNumberOfMembers, valuesMembersFilter)
+	err = addDateAlbumFilters(&filtersSet, "Gt", filtersValue.FirstAlbumFrom)
+	if err != nil {
+		app.ClientError(w, r, http.StatusBadRequest, fmt.Sprintf("running a filter for First Album Date failures: %v ", err))
+		return
 	}
 
-	// filter by the date of creation
-	filtersValue.CreationDateFrom = r.URL.Query().Get("CreationDateFrom")
-	filtersValue.CreationDateTo = r.URL.Query().Get("CreationDateTo")
-	if filtersValue.CreationDateFrom == "" {
-		if filtersValue.CreationDateTo != "" {
-			filters.AddGivenFilter(&filtersSet, filters.FilterYearCreatingLt, filtersValue.CreationDateTo)
-		}
-	} else /*filtersValue.CreationDateFrom !=""*/ if filtersValue.CreationDateTo == "" {
-		filters.AddGivenFilter(&filtersSet, filters.FilterYearCreatingGt, filtersValue.CreationDateFrom)
-	} else { /*filtersValue.CreationDateFrom !="" && filtersValue.CreationDateTo !="" */
-		switch {
-		case filtersValue.CreationDateFrom == filtersValue.CreationDateTo:
-			filters.AddGivenFilter(&filtersSet, filters.FilterYearCreatingEq, filtersValue.CreationDateFrom)
-		case filtersValue.CreationDateFrom < filtersValue.CreationDateTo:
-			filters.AddGivenFilter(&filtersSet, filters.FilterYearCreatingGt, filtersValue.CreationDateFrom)
-			filters.AddGivenFilter(&filtersSet, filters.FilterYearCreatingLt, filtersValue.CreationDateTo)
-		}
-	}
-
-	// filter by the first album date
-	filtersValue.FirstAlbumFrom.year = r.URL.Query().Get("FirstAlbumFromYear")
-	filtersValue.FirstAlbumFrom.month = r.URL.Query().Get("FirstAlbumFromMonth")
-	filtersValue.FirstAlbumFrom.day = r.URL.Query().Get("FirstAlbumFromDay")
-	filtersValue.FirstAlbumTo.year = r.URL.Query().Get("FirstAlbumToYear")
-	filtersValue.FirstAlbumTo.month = r.URL.Query().Get("FirstAlbumToMonth")
-	filtersValue.FirstAlbumTo.day = r.URL.Query().Get("FirstAlbumToDay")
-
-	err := runDateFilter(filtersValue.FirstAlbumFrom, "Gt", &filtersSet)
+	err = addDateAlbumFilters(&filtersSet, "Lt", filtersValue.FirstAlbumTo)
 	if err != nil {
 		app.ClientError(w, r, http.StatusBadRequest, fmt.Sprintf("running a filter for First Album Date failure: %v ", err))
 		return
 	}
 
-	err = runDateFilter(filtersValue.FirstAlbumTo, "Lt", &filtersSet)
-	if err != nil {
-		app.ClientError(w, r, http.StatusBadRequest, fmt.Sprintf("running a filter for First Album Date failure: %v ", err))
-		return
-	}
-
-	// filter by the location
-	filtersValue.Location = r.URL.Query().Get("Location")
-	if filtersValue.Location != "" {
-		filters.AddGivenFilter(&filtersSet, filters.FilterLocationContain, filtersValue.Location)
-	}
+	filtersSet.AddGivenFilter(filters.FilterLocationContain, filtersValue.Location)
+	
+	filtersSet.AddGivenFilter(filters.FilterNameOfMemberContain, filtersValue.NameOfMember)
 
 	// apply all filters to set of artists
 	output := &struct {
@@ -127,7 +84,7 @@ func (app *application) concertsInfo(w http.ResponseWriter, r *http.Request) {
 	}
 	app.infoLog.Printf("relations for id %s is: %#v\n", id, rel)
 	if rel.Id != i {
-		app.ServerError(w, r, "relations' Id is different from the artist's Id", err)
+		app.ServerError(w, r, "relations' Id is different from the artist's Id", fmt.Errorf("%d != %d", rel.Id, i))
 		return
 	}
 	// Parses locations and the dates of concerts in each location
@@ -152,45 +109,41 @@ func (app *application) concertsInfo(w http.ResponseWriter, r *http.Request) {
 	GetTemplate("info.page.tmpl", w, output)
 }
 
-func (app *application) getJsonForJS(w http.ResponseWriter, r *http.Request) {
-	// if r.Method != "POST" {
-	// 	app.MethodNotAllowed(w, r, "POST")
-	// 	return
-	// }
+func getJsonForJS(w http.ResponseWriter, r *http.Request) {
 	// Send GET request to the URL
 	response, err := http.Get("https://groupietrackers.herokuapp.com/api/artists")
 	if err != nil {
-		log.Fatal(err)
+		app.ServerError(w, r, "get api failed", err)
+		return
 	}
 	defer response.Body.Close()
 	// Read the response body
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		log.Fatal(err)
+		app.ServerError(w, r, "get api failed", err)
+		return
 	}
 
-	w.Header().Add("Access-Control-Allow-Origin","http://www.localhost:8080")
+	w.Header().Add("Access-Control-Allow-Origin", "http://www.localhost:8080")
 	// Print the JSON text
 	jsonData := string(body) // The string of the Artists Json
 	fmt.Fprint(w, jsonData)
 }
 
-func (app *application) getJsonForJSloc(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		app.MethodNotAllowed(w, r, "POST")
-		return
-	}
+func getJsonForJSloc(w http.ResponseWriter, r *http.Request) {
 	response, err := http.Get("https://groupietrackers.herokuapp.com/api/locations")
 	if err != nil {
-		log.Fatal(err)
+		app.ServerError(w, r, "get api failed", err)
+		return
 	}
 	defer response.Body.Close()
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		log.Fatal(err)
+		app.ServerError(w, r, "get api failed", err)
+		return
 	}
 
-	w.Header().Add("Access-Control-Allow-Origin","http://www.localhost:8080")
+	w.Header().Add("Access-Control-Allow-Origin", "http://www.localhost:8080")
 	jsonData := string(body) // The string of the Artists Json
 	fmt.Fprint(w, jsonData)
 }

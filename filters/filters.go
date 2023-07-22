@@ -12,30 +12,37 @@ type (
 	FilterOr func(values []int, data *api.Artist) bool
 )
 
-type SetGivenFilter struct {
+type GivenFilter struct {
 	FilterFunc Filter
 	Value      string
 }
-type SetGivenFilterOr struct {
+
+type SetGivenFilter []GivenFilter
+
+type GivenFilterOr struct {
 	FilterFunc FilterOr
 	Value      []int
 }
 
-func AddGivenFilter(givenFilters *[]SetGivenFilter, filterFunc Filter, value string) {
-	*givenFilters = append(*givenFilters, SetGivenFilter{
+type SetGivenFilterOr []GivenFilterOr
+
+func (givenFilters *SetGivenFilter) AddGivenFilter(filterFunc Filter, value string) {
+	if value != "" {
+		*givenFilters = append(*givenFilters, GivenFilter{
+			FilterFunc: filterFunc,
+			Value:      value,
+		})
+	}
+}
+
+func (givenFilters *SetGivenFilterOr) AddGivenFilterOr(filterFunc FilterOr, value []int) {
+	*givenFilters = append(*givenFilters, GivenFilterOr{
 		FilterFunc: filterFunc,
 		Value:      value,
 	})
 }
 
-func AddGivenFilterOr(givenFilters *[]SetGivenFilterOr, filterFunc FilterOr, value []int) {
-	*givenFilters = append(*givenFilters, SetGivenFilterOr{
-		FilterFunc: filterFunc,
-		Value:      value,
-	})
-}
-
-func ApplyFilters(records []*api.Artist, filters []SetGivenFilter, filtersOr []SetGivenFilterOr) []*api.Artist {
+func ApplyFilters(records []*api.Artist, filters SetGivenFilter, filtersOr SetGivenFilterOr) []*api.Artist {
 	if len(filters) == 0 {
 		return records
 	}
@@ -160,6 +167,15 @@ func FilterNumberOfMembers(values []int, data *api.Artist) bool {
 	}
 	for _, v := range values {
 		if len(data.Members) == v {
+			return true
+		}
+	}
+	return false
+}
+
+func FilterNameOfMemberContain(value string, data *api.Artist) bool {
+	for _, m := range data.Members {
+		if strings.Contains(strings.ToLower(m), strings.ToLower(value)) {
 			return true
 		}
 	}

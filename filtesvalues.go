@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -20,6 +21,7 @@ type filtersValues struct {
 	FirstAlbumFrom,
 	FirstAlbumTo date
 	Members []int
+	NameOfMember string
 }
 
 func checkStringDate(date string, from, to int) bool {
@@ -64,7 +66,7 @@ runs a filter for the given date.
 It checks if the date consists of the year, month, day, or of the year and month, or of only a year.
 Then it runs the filter for the given operation. The operation must be a one of the follow strings: "Eq", "Lt", "Gt".
 */
-func runDateFilter(currentFilter date, operation string, filtersSet *[]filters.SetGivenFilter) error {
+func addDateAlbumFilters(filtersSet *filters.SetGivenFilter, operation string, currentFilter date) error {
 	operationFuncs := map[string](map[string]filters.Filter){
 		"Date": {
 			"Eq": filters.FilterFirstAlbumDateEq,
@@ -83,7 +85,6 @@ func runDateFilter(currentFilter date, operation string, filtersSet *[]filters.S
 		},
 	}
 
-
 	if currentFilter.notEmptyYear() {
 		if !currentFilter.checkYear(1900, time.Now().Year()) {
 			return fmt.Errorf("wrong years for album creation %s", currentFilter.year)
@@ -99,14 +100,79 @@ func runDateFilter(currentFilter date, operation string, filtersSet *[]filters.S
 					return fmt.Errorf("wrong day for album creation %s.%s.%s", currentFilter.day, currentFilter.month, currentFilter.year)
 				}
 
-
-				filters.AddGivenFilter(filtersSet, operationFuncs["Date"][operation], currentFilter.mergeDayMonthYear())
+				filtersSet.AddGivenFilter(operationFuncs["Date"][operation], currentFilter.mergeDayMonthYear())
 			} else {
-				filters.AddGivenFilter(filtersSet, operationFuncs["Month"][operation], currentFilter.mergeMonthYear())
+				filtersSet.AddGivenFilter(operationFuncs["Month"][operation], currentFilter.mergeMonthYear())
 			}
 		} else {
-			filters.AddGivenFilter(filtersSet, operationFuncs["Year"][operation], currentFilter.year)
+			filtersSet.AddGivenFilter(operationFuncs["Year"][operation], currentFilter.year)
 		}
 	}
 	return nil
+}
+
+func addDateCreationFilter(currentFiltersValue *filtersValues, filtersSet *filters.SetGivenFilter) error {
+	yearFrom := date{year: currentFiltersValue.CreationDateFrom}
+	yearTo := date{year: currentFiltersValue.CreationDateTo}
+	if currentFiltersValue.CreationDateFrom == "" {
+		if currentFiltersValue.CreationDateTo != "" {
+			if !yearTo.checkYear(1900, time.Now().Year()) {
+				return fmt.Errorf("wrong years for a group creation %s", yearTo)
+			}
+
+			filtersSet.AddGivenFilter(filters.FilterYearCreatingLt, currentFiltersValue.CreationDateTo)
+		}
+	} else /*filtersValue.CreationDateFrom !=""*/ if currentFiltersValue.CreationDateTo == "" {
+		filtersSet.AddGivenFilter(filters.FilterYearCreatingGt, currentFiltersValue.CreationDateFrom)
+	} else { /*filtersValue.CreationDateFrom !="" && filtersValue.CreationDateTo !="" */
+
+		if !yearFrom.checkYear(1900, time.Now().Year()) {
+			return fmt.Errorf("wrong years for a group creation %s", yearFrom)
+		}
+
+		if !yearTo.checkYear(1900, time.Now().Year()) {
+			return fmt.Errorf("wrong years for a group creation %s", yearTo)
+		}
+
+		switch {
+		case currentFiltersValue.CreationDateFrom == currentFiltersValue.CreationDateTo:
+			filtersSet.AddGivenFilter(filters.FilterYearCreatingEq, currentFiltersValue.CreationDateFrom)
+		case currentFiltersValue.CreationDateFrom < currentFiltersValue.CreationDateTo:
+			filtersSet.AddGivenFilter(filters.FilterYearCreatingGt, currentFiltersValue.CreationDateFrom)
+			filtersSet.AddGivenFilter(filters.FilterYearCreatingLt, currentFiltersValue.CreationDateTo)
+		}
+	}
+	return nil
+}
+
+func getFiltersValuesFromQuery(query url.Values) filtersValues {
+	var filtersValue filtersValues
+	filtersValue.Name = query.Get("Name")
+
+	//filtersValue.Members = make([]int, len(app.filtersConstrains.Members))
+	if query.Get("Members") != "" {
+		membersFilters := query["Members"]
+		for _, mf := range membersFilters {
+			i, err := strconv.Atoi(mf)
+			if err == nil {
+				filtersValue.Members = append(filtersValue.Members, i)
+			}
+		}
+	}
+
+	filtersValue.CreationDateFrom = query.Get("CreationDateFrom")
+	filtersValue.CreationDateTo = query.Get("CreationDateTo")
+
+	filtersValue.FirstAlbumFrom.year = query.Get("FirstAlbumFromYear")
+	filtersValue.FirstAlbumFrom.month = query.Get("FirstAlbumFromMonth")
+	filtersValue.FirstAlbumFrom.day = query.Get("FirstAlbumFromDay")
+	filtersValue.FirstAlbumTo.year = query.Get("FirstAlbumToYear")
+	filtersValue.FirstAlbumTo.month = query.Get("FirstAlbumToMonth")
+	filtersValue.FirstAlbumTo.day = query.Get("FirstAlbumToDay")
+
+	filtersValue.Location = query.Get("Location")
+
+	filtersValue.NameOfMember = query.Get("NameOfMember")
+
+	return filtersValue
 }
