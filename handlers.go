@@ -1,8 +1,8 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -48,7 +48,7 @@ func (app *application) homePageHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	filtersSet.AddGivenFilter(filters.FilterLocationContain, filtersValue.Location)
-	
+
 	filtersSet.AddGivenFilter(filters.FilterNameOfMemberContain, filtersValue.NameOfMember)
 
 	// apply all filters to set of artists
@@ -109,44 +109,49 @@ func (app *application) concertsInfo(w http.ResponseWriter, r *http.Request) {
 	GetTemplate("info.page.tmpl", w, output)
 }
 
-func getJsonForJS(w http.ResponseWriter, r *http.Request) {
+func (app *application)getJsonForJS(w http.ResponseWriter, r *http.Request) {
+	jsonData, err := json.Marshal(app.artists)
+	if err != nil {
+		app.ServerError(w, r, "get json failed", err)
+		return
+	}
 	// Send GET request to the URL
-	response, err := http.Get("https://groupietrackers.herokuapp.com/api/artists")
-	if err != nil {
-		app.ServerError(w, r, "get api failed", err)
-		return
-	}
-	defer response.Body.Close()
-	// Read the response body
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		app.ServerError(w, r, "get api failed", err)
-		return
-	}
+	// response, err := http.Get("https://groupietrackers.herokuapp.com/api/artists")
+	// if err != nil {
+	// 	app.ServerError(w, r, "get api failed", err)
+	// 	return
+	// }
+	// defer response.Body.Close()
+	// // Read the response body
+	// body, err := ioutil.ReadAll(response.Body)
+	// if err != nil {
+	// 	app.ServerError(w, r, "get api failed", err)
+	// 	return
+	// }
 
 	w.Header().Add("Access-Control-Allow-Origin", "http://www.localhost:8080")
 	// Print the JSON text
-	jsonData := string(body) // The string of the Artists Json
-	fmt.Fprint(w, jsonData)
+	// jsonData := string(body) // The string of the Artists Json
+	fmt.Fprint(w, string(jsonData))
 }
 
-func getJsonForJSloc(w http.ResponseWriter, r *http.Request) {
-	response, err := http.Get("https://groupietrackers.herokuapp.com/api/locations")
-	if err != nil {
-		app.ServerError(w, r, "get api failed", err)
-		return
-	}
-	defer response.Body.Close()
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		app.ServerError(w, r, "get api failed", err)
-		return
-	}
+// func getJsonForJSloc(w http.ResponseWriter, r *http.Request) {
+// 	response, err := http.Get("https://groupietrackers.herokuapp.com/api/locations")
+// 	if err != nil {
+// 		app.ServerError(w, r, "get api failed", err)
+// 		return
+// 	}
+// 	defer response.Body.Close()
+// 	body, err := ioutil.ReadAll(response.Body)
+// 	if err != nil {
+// 		app.ServerError(w, r, "get api failed", err)
+// 		return
+// 	}
 
-	w.Header().Add("Access-Control-Allow-Origin", "http://www.localhost:8080")
-	jsonData := string(body) // The string of the Artists Json
-	fmt.Fprint(w, jsonData)
-}
+// 	w.Header().Add("Access-Control-Allow-Origin", "http://www.localhost:8080")
+// 	jsonData := string(body) // The string of the Artists Json
+// 	fmt.Fprint(w, jsonData)
+// }
 
 type middlewareFunc func(http.Handler) http.Handler
 

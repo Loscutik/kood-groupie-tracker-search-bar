@@ -48,7 +48,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("fail fetcing artists' data: %s", err)
 	}
-	app.infoLog.Printf("artists: %#v\n", app.artists)
+	for _,artist:=range app.artists{
+		app.infoLog.Printf("artists: %#v\n", *artist)
+	}
 
 	app.setFilterConstrains()
 
@@ -165,10 +167,8 @@ func (app *application) createRouters() *http.ServeMux {
 	// Handlers to run the web pages
 	mux.HandleFunc("/", app.homePageHandler)
 	mux.HandleFunc("/info", app.concertsInfo)
-	//mux.HandleFunc("/json", app.getJsonForJS)
-	mux.Handle("/json", app.methodChecker("POST")(http.HandlerFunc(getJsonForJS)))
-	//mux.HandleFunc("/jsonloc", app.getJsonForJSloc)
-	mux.Handle("/jsonloc", app.methodChecker("POST")(http.HandlerFunc(getJsonForJSloc)))
+	mux.Handle("/json", app.methodChecker("POST")(http.HandlerFunc(app.getJsonForJS)))
+	//mux.Handle("/jsonloc", app.methodChecker("POST")(http.HandlerFunc(getJsonForJSloc)))
 	fileServer := http.FileServer(neuteredFileSystem{http.Dir(TEMPLATES_PATH + "static/")})
 	// fileServer := http.FileServer( http.Dir(TEMPLATES_PATH + "static/"))
 	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
