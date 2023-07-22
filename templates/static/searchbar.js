@@ -1,22 +1,16 @@
-
-
-
 const searchinput = document.querySelector("#searchbar");
 const dropdwn = document.getElementById("dropdown");
 function checkfocus() {
   document.getElementById("dropdown").style.display = 'block';
 }
-function checkfocusout() {
-  // document.getElementById("dropdown").style.display = 'none'; <<<< EDIT TO REMOVE 
-}
 searchinput.addEventListener("input", updateValue);
 
 let url = 'http://localhost:8080/json';
-// let urlloc = 'http://localhost:8080/jsonloc'; // For Locations
+//  let urlloc = 'http://localhost:8080/jsonloc'; // For Locations
 let jsonres = []
 fetch(url, { method: 'POST', })
   .then(response => {
-    // console.log(response)
+    //  console.log(response)
     if (response.ok) {
       return response.json();
     } else {
@@ -31,23 +25,23 @@ fetch(url, { method: 'POST', })
     console.error('Error:', error);
   });
 
-//console.log("data:", jsonres)
-// let jsonresloc = []
-// fetch(urlloc, { method: 'POST', })
+// console.log("data:", jsonres)
+//  let jsonresloc = []
+//  fetch(urlloc, { method: 'POST', })
 //   .then(response2 => {
 //     if (response2.ok) {
 //       return response2.json();
 //     } else {
 //       throw new Error('Network response was not OK.');
 //     }
-//   })
+//    })
 //   .then(data2 => {
 //     jsonresloc = data2;
 //     console.log("data loc:", jsonresloc)
-//   })
-//   .catch(error => {
-//     console.error('Error:', error);
-//   });
+//    })
+//    .catch(error => {
+//      console.error('Error:', error);
+//    });
 
 
 // Here should be the function which places the JSON elements according to the typed input
@@ -64,15 +58,15 @@ function updateValue(e) {
     typed = typed.concat(...drop[v])
   }
 
-  // console.log("Typed", typed) /// <<<<< TYPED here is the current text in the search field
+  //  console.log("Typed", typed) /// <<<<< TYPED here is the current text in the search field
   for (j = 0; j < jsonres.length; j++) {
-    //  jsonres[j] - one index group data, object with key-value pairs
+    //   jsonres[j] - one index group data, object with key-value pairs
     objvalue = Object.values(jsonres[j])
-    // console.log(Object.keys(groupobj)) // ['id', 'image', 'name', 'members', 'creationDate', 'firstAlbum', 'locations', 'concertDates', 'relations']
-    // console.log(Object.values(groupobj)) 
+    //  console.log(Object.keys(groupobj)) // ['id', 'image', 'name', 'members', 'creationDate', 'firstAlbum', 'locations', 'concertDates', 'relations']
+    //  console.log(Object.values(groupobj)) 
     for (f = 0; f < objvalue.length; f++) {
       let ob = objvalue[f].toString().toLowerCase()
-      if (ob.includes(typed.toLowerCase())) {// && ((Object.keys(jsonres[j])[f] == 'name') || (Object.keys(jsonres[j])[f] == 'members') || (Object.keys(jsonres[j])[f] == 'creationDate') || (Object.keys(jsonres[j])[f] == 'firstAlbum'))) {
+      if (ob.includes(typed.toLowerCase())) { // && ((Object.keys(jsonres[j])[f] == 'name') || (Object.keys(jsonres[j])[f] == 'members') || (Object.keys(jsonres[j])[f] == 'creationDate') || (Object.keys(jsonres[j])[f] == 'firstAlbum'))) {
         switch (Object.keys(jsonres[j])[f]) {
           case 'name':
             drp.push(objvalue[f] + ' - Artist');
@@ -92,7 +86,7 @@ function updateValue(e) {
             drp.push(objvalue[f] + ' - First album');
             break
           default:
-            //drp.push(objvalue[f] + ' - ' + Object.keys(jsonres[j])[f]);
+            // drp.push(objvalue[f] + ' - ' + Object.keys(jsonres[j])[f]);
             break
         }
       }
@@ -115,8 +109,8 @@ function updateValue(e) {
 
   /*
     // Locations
-    objvalueloc = Object.values(jsonresloc)[0]
-    for (let o = 0; o < (objvalueloc.length); o++) {
+     objvalueloc = Object.values(jsonresloc)[0]
+     for (let o = 0; o < (objvalueloc.length); o++) {
       //console.log("logloghere2", objvalueloc[o]) // data of one id
       for (let r = 0; r < (objvalueloc[o].locations.length); r++) {
         if ((objvalueloc[o].locations)[r].toString().toLowerCase().includes(typed.toLowerCase())) {
@@ -132,12 +126,11 @@ function updateValue(e) {
       }
     } // End of locations
   */
-  //console.log('drp', drp)
+  console.log('drp', drp)
   let drpn = [...new Set(drp)];
   for (let y = 0; y < drpn.length; y++) {
     let obj = document.createElement("li");
     obj.setAttribute('class', 'listclass');
-    // obj.innerHTML = drp[y];
     if (drpn[y].includes(' - Artist')) {
       let ar = " - Artist"
       let drpp = drpn[y].split(ar)[0]
@@ -145,14 +138,11 @@ function updateValue(e) {
       dropdwn.appendChild(obj);
     }
 
-    if (drpn[y].includes(' - Member')) { // NEED TO DO filter
+    if (drpn[y].includes(' - Member')) { 
       obj.innerHTML = drpn[y];
       let arm = " - Member"
       let drppm = drpn[y].split(arm)[0]
       obj.innerHTML = '<a href="http://localhost:8080/?NameOfMember=' + drppm + '" style="text-decoration:none;color:black;">' + drpn[y] + '</a>';
-
-      // found members ->> "Phil Collins" -> "Phil Collins" and "Genesis" 
-      // console.log(groupname, " - Group name;\n", drp[y]) // = Group name
       dropdwn.appendChild(obj);
     }
 
@@ -178,11 +168,7 @@ function updateValue(e) {
       dropdwn.appendChild(obj);
     }
   }
-  if (drp.length == 396) {
+  if (drp.length == 680) {
     dropdwn.textContent = ''
   }
 }
-
-// NEED TO DO:
-// - Member
-// - Remove doubles!!!
